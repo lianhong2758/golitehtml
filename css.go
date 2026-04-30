@@ -18,6 +18,14 @@ type cssRule struct {
 	order       int
 }
 
+type cssRuleSet struct {
+	rules     []cssRule
+	universal []int
+	byTag     map[string][]int
+	byID      map[string][]int
+	byClass   map[string][]int
+}
+
 const uaCSS = `
 html, body { display: block; }
 head, meta, link, style, script, title { display: none; }
@@ -129,17 +137,27 @@ func splitDeclarations(body string) []string {
 func splitSelectors(s string) []string {
 	var out []string
 	start := 0
-	depth := 0
+	depthParen := 0
+	depthBracket := 0
+	quote := rune(0)
 	for i, r := range s {
-		switch r {
-		case '(':
-			depth++
-		case ')':
-			if depth > 0 {
-				depth--
+		switch {
+		case quote != 0:
+			if r == quote {
+				quote = 0
 			}
-		case ',':
-			if depth == 0 {
+		case r == '\'' || r == '"':
+			quote = r
+		case r == '(':
+			depthParen++
+		case r == ')' && depthParen > 0:
+			depthParen--
+		case r == '[':
+			depthBracket++
+		case r == ']' && depthBracket > 0:
+			depthBracket--
+		case r == ',':
+			if depthParen == 0 && depthBracket == 0 {
 				out = append(out, s[start:i])
 				start = i + 1
 			}
@@ -193,6 +211,18 @@ func findRuleClose(s string, from int) int {
 
 // applyStyles 按“继承默认值 -> CSS 规则 -> HTML 旧属性 -> 内联 style”的顺序计算样式。
 func applyStyles(root *Node, rules []cssRule) {
+	ruleSet := newCSSRuleSet(rules)
+	var applyMatchingRules func(*Node)
+	applyMatchingRules = func(n *Node) {
+		for _, idx := range ruleSet.candidates(n) {
+			rule := ruleSet.rules[idx]
+			if rule.selector.matches(n) {
+				for _, decl := range rule.decls {
+					n.Style.applyProperty(decl.name, decl.value)
+				}
+			}
+		}
+	}
 	var walk func(*Node)
 	walk = func(n *Node) {
 		if n.Type == TextNode {
@@ -211,24 +241,7 @@ func applyStyles(root *Node, rules []cssRule) {
 		} else {
 			n.Style = inheritStyle(parent)
 		}
-		var matches []cssRule
-		for _, rule := range rules {
-			if rule.selector.matches(n) {
-				matches = append(matches, rule)
-			}
-		}
-		// 先按权重再按出现顺序排序，后应用的声明自然覆盖前面的声明。
-		sort.SliceStable(matches, func(i, j int) bool {
-			if matches[i].specificity == matches[j].specificity {
-				return matches[i].order < matches[j].order
-			}
-			return matches[i].specificity < matches[j].specificity
-		})
-		for _, rule := range matches {
-			for _, decl := range rule.decls {
-				n.Style.applyProperty(decl.name, decl.value)
-			}
-		}
+		applyMatchingRules(n)
 		if n.Type == ElementNode {
 			applyHTMLHints(n)
 			if raw, ok := n.AttrValue("style"); ok {
@@ -242,6 +255,83 @@ func applyStyles(root *Node, rules []cssRule) {
 		}
 	}
 	walk(root)
+}
+
+func newCSSRuleSet(rules []cssRule) cssRuleSet {
+	set := cssRuleSet{
+		rules:   append([]cssRule(nil), rules...),
+		byTag:   make(map[string][]int),
+		byID:    make(map[string][]int),
+		byClass: make(map[string][]int),
+	}
+	sort.SliceStable(set.rules, func(i, j int) bool {
+		if set.rules[i].specificity == set.rules[j].specificity {
+			return set.rules[i].order < set.rules[j].order
+		}
+		return set.rules[i].specificity < set.rules[j].specificity
+	})
+	for i := range set.rules {
+		part, ok := set.rules[i].selector.rightmost()
+		if !ok {
+			continue
+		}
+		switch {
+		case part.id != "":
+			set.byID[part.id] = append(set.byID[part.id], i)
+		case len(part.classes) > 0:
+			set.byClass[part.classes[0]] = append(set.byClass[part.classes[0]], i)
+		case part.tag != "":
+			set.byTag[part.tag] = append(set.byTag[part.tag], i)
+		default:
+			set.universal = append(set.universal, i)
+		}
+	}
+	return set
+}
+
+func (s cssRuleSet) candidates(n *Node) []int {
+	if n == nil || n.Type != ElementNode {
+		return nil
+	}
+	id := n.ID()
+	var classes []string
+	if n.Attr != nil {
+		classes = strings.Fields(n.Attr["class"])
+	}
+	total := len(s.universal) + len(s.byTag[n.Tag])
+	if id != "" {
+		total += len(s.byID[id])
+	}
+	for _, class := range classes {
+		total += len(s.byClass[class])
+	}
+	out := make([]int, 0, total)
+	out = append(out, s.universal...)
+	out = append(out, s.byTag[n.Tag]...)
+	if id != "" {
+		out = append(out, s.byID[id]...)
+	}
+	for _, class := range classes {
+		out = append(out, s.byClass[class]...)
+	}
+	sort.Ints(out)
+	out = compactSortedInts(out)
+	return out
+}
+
+func compactSortedInts(values []int) []int {
+	if len(values) < 2 {
+		return values
+	}
+	write := 1
+	for read := 1; read < len(values); read++ {
+		if values[read] == values[write-1] {
+			continue
+		}
+		values[write] = values[read]
+		write++
+	}
+	return values[:write]
 }
 
 // applyHTMLHints 把少量历史 HTML 属性和语义标签转换成样式。

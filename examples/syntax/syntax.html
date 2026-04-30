@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>golitehtml syntax support visual test</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #f5f7fb;
+      color: #202428;
+      font-family: Verdana, sans-serif;
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .page {
+      width: 900px;
+      margin: 0 auto;
+      padding: 22px;
+      background: white;
+      border: 2px solid #d0d7de;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      margin: 0 0 10px 0;
+      color: #0969da;
+      font: italic 700 28px/36px Georgia, serif;
+      text-decoration: underline;
+    }
+
+    h2 {
+      margin: 22px 0 10px 0;
+      color: #aa1e3c;
+      font-size: 20px;
+      line-height: 26px;
+    }
+
+    .note {
+      margin: 0 0 16px 0;
+      color: rgb(72, 82, 95);
+    }
+
+    .selector-board {
+      margin: 8px 0 0 0;
+      padding: 0;
+      list-style: none;
+      border: 1px solid #b9c2cf;
+      background-color: #eef5ff;
+    }
+
+    .selector-board > li {
+      display: block;
+      margin: 6px;
+      padding: 10px 12px;
+      border: 1px solid #c7d1de;
+      background: #ffffff;
+      line-height: 22px;
+      min-height: 22px;
+    }
+
+    .selector-board > li.item.first {
+      border-left: 6px solid #0969da;
+      font-weight: 700;
+    }
+
+    .selector-board > li.item.first[data-role~="nav"] {
+      border-left: 10px solid #0969da;
+    }
+
+    .selector-board > li + li {
+      background-color: #f8fbff;
+    }
+
+    .selector-board > li ~ li {
+      border-right: 6px solid #53a0cf;
+    }
+
+    .selector-board > li:first-child {
+      color: #03315c;
+    }
+
+    .selector-board > li:last-child {
+      color: #aa1e3c;
+    }
+
+    .selector-board > li:nth-child(2) {
+      font-style: italic;
+    }
+
+    .selector-board > li:nth-child(2n+1) {
+      background-color: #fffdf0;
+    }
+
+    .selector-board > li:nth-last-child(1) {
+      padding-bottom: 14px;
+    }
+
+    .selector-board > li:not(.skip) {
+      border-top: 3px solid #1a7f37;
+    }
+
+    [data-role~="nav"] {
+      border-left: 10px solid #1a7f37;
+    }
+
+    [data-role="nav"] {
+      border-bottom: 3px dashed #1a7f37;
+    }
+
+    [lang|="zh"] {
+      font-weight: 700;
+    }
+
+    [title^="prefix"] {
+      padding-left: 18px;
+    }
+
+    [title$="suffix"] {
+      border-bottom-color: #aa1e3c;
+    }
+
+    [title*="middle"] {
+      color: #8250df;
+    }
+
+    .structure {
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid #d0d7de;
+      background: #fafbfc;
+    }
+
+    .structure p:first-of-type {
+      color: #0969da;
+    }
+
+    .structure p:last-of-type {
+      color: #aa1e3c;
+    }
+
+    .structure span:only-of-type {
+      display: block;
+      margin: 6px 0;
+      padding: 6px;
+      background: #fff8c5;
+    }
+
+    .single em:only-child {
+      display: block;
+      margin: 8px 0;
+      padding: 6px;
+      background: #dafbe1;
+    }
+
+    #empty:empty {
+      height: 18px;
+      margin-top: 8px;
+      background: #ffebe9;
+      border: 1px solid #cf222e;
+    }
+
+    .property-card {
+      display: table-cell;
+      color: rgb(245, 248, 255);
+      background: #112233 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect width='48' height='48' fill='%23112233'/%3E%3Cpath d='M0 48 L48 0' stroke='%2353a0cf' stroke-width='8'/%3E%3C/svg%3E") repeat-x fixed center top;
+      background-position-x: 20%;
+      background-position-y: bottom;
+      font: italic 700 18px/24px Georgia, serif;
+      font-size-adjust: .5;
+      text-decoration: underline;
+      text-align: justify;
+      direction: rtl;
+      width: 460px;
+      min-width: 260px;
+      min-height: 72px;
+      max-width: 620px;
+      max-height: 220px;
+      margin: 8px 2px 12px 4px;
+      padding: 12px 14px;
+      border: 2px solid red;
+      border-top: 4px dashed blue;
+      border-right-width: thick;
+      border-bottom-style: dotted;
+      border-left-color: #00ff00;
+      border-radius: 4px 5px;
+      border-collapse: collapse;
+      border-spacing: 2px 3px;
+      box-sizing: border-box;
+      caption-side: bottom;
+      empty-cells: hide;
+      cursor: pointer;
+    }
+
+    .float-row {
+      margin-top: 14px;
+      padding: 10px;
+      border: 1px solid #d0d7de;
+      background: #f6f8fa;
+    }
+
+    .float-box {
+      float: left;
+      width: 150px;
+      height: 40px;
+      margin-right: 8px;
+      padding: 8px;
+      background: #0969da;
+      color: white;
+      border: 2px solid #03315c;
+      box-sizing: border-box;
+    }
+
+    .float-box.right {
+      float: right;
+      background: #aa1e3c;
+      border-color: #70162a;
+    }
+
+    .clear-both {
+      clear: both;
+      margin-top: 8px;
+      padding: 8px;
+      background: #dafbe1;
+      border: 1px solid #1a7f37;
+    }
+
+    .comma-test[data-value="a,b"], #other {
+      color: red;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>CSS selector and property syntax</h1>
+    <p class="note">This page renders the same selector and CSS property syntax covered by syntax_support_test.go.</p>
+
+    <h2>Selector syntax</h2>
+    <ul class="selector-board" id="list">
+      <li id="a" class="item first" data-role="nav main" lang="zh-CN" title="prefix-middle-suffix">A: class, first-child, odd nth-child, word attribute, lang prefix, title prefix/middle/suffix.</li>
+      <li id="b" class="item skip" data-role="body" lang="en" title="other">B: adjacent sibling, skipped by :not(.skip), exact nth-child(2).</li>
+      <li id="c" class="item" data-role="nav" lang="zh-Hans" title="prefix-tail">C: last-child, exact data-role, general sibling and nth-last-child.</li>
+    </ul>
+
+    <div class="structure">
+      <p id="p1">First paragraph of type.</p>
+      <span id="span1">Only span of type.</span>
+      <p id="p2" data-empty="">Last paragraph of type with a present data-empty attribute.</p>
+      <div class="single"><em id="only">Only child em.</em></div>
+      <div id="empty"></div>
+    </div>
+
+    <h2>Property syntax</h2>
+    <div class="property-card">
+      Styled property card: display, color, background, font shorthand, text decoration, direction, sizing, padding, margin, border sides, border radius and table-related properties.
+    </div>
+
+    <h2>Float, clear and selector lists</h2>
+    <div class="float-row">
+      <div class="float-box">float left</div>
+      <div class="float-box right">float right</div>
+      <div class="clear-both">clear: both creates a new line below floated boxes.</div>
+    </div>
+
+    <p class="comma-test" data-value="a,b">Attribute value with comma matched by selector list.</p>
+    <p id="other">ID selector from the same comma separated selector list.</p>
+  </div>
+</body>
+</html>

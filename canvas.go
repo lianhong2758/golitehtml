@@ -156,6 +156,33 @@ func (op ImageOp) draw(c Canvas, dx, dy float64) {
 	c.DrawImage(op)
 }
 
+type backgroundImageCanvas interface {
+	DrawBackgroundImage(BackgroundImageOp)
+}
+
+// BackgroundImageOp 表示元素背景图，绘制时会被裁剪在元素背景盒内。
+type BackgroundImageOp struct {
+	Rect      Rect
+	Src       string
+	Repeat    string
+	PositionX string
+	PositionY string
+	Node      *Node
+}
+
+// Bounds 实现 Op。
+func (op BackgroundImageOp) Bounds() Rect { return op.Rect }
+
+func (op BackgroundImageOp) draw(c Canvas, dx, dy float64) {
+	bg, ok := c.(backgroundImageCanvas)
+	if !ok {
+		return
+	}
+	op.Rect.X += dx
+	op.Rect.Y += dy
+	bg.DrawBackgroundImage(op)
+}
+
 // Frame 是文档在指定视口宽度下渲染得到的不可变结果。
 type Frame struct {
 	Width  float64

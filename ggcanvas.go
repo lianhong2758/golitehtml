@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	stddraw "image/draw"
+	"math"
 	"strconv"
+	"strings"
 
 	"github.com/FloatTech/gg"
 	builtfont "github.com/lianhong2758/golitehtml/font"
@@ -168,6 +171,108 @@ func (c *ggCanvas) DrawImage(op ImageOp) {
 		return
 	}
 	c.dc.DrawImage(scaleImage(img, drawW, drawH), int(op.Rect.X+0.5), int(op.Rect.Y+0.5))
+}
+
+// DrawBackgroundImage 绘制 CSS 背景图，支持常见的 repeat/no-repeat 和基础位置关键字。
+func (c *ggCanvas) DrawBackgroundImage(op BackgroundImageOp) {
+	if op.Rect.Empty() || op.Src == "" {
+		return
+	}
+	img, ok := c.images.Image(op.Src)
+	if !ok {
+		return
+	}
+	bounds := img.Bounds()
+	tileW := float64(bounds.Dx())
+	tileH := float64(bounds.Dy())
+	if tileW <= 0 || tileH <= 0 {
+		return
+	}
+
+	dstW := int(math.Ceil(op.Rect.W))
+	dstH := int(math.Ceil(op.Rect.H))
+	if dstW <= 0 || dstH <= 0 {
+		return
+	}
+	dst := image.NewRGBA(image.Rect(0, 0, dstW, dstH))
+	startX := backgroundStart(op.Rect.X, op.Rect.W, tileW, op.PositionX)
+	startY := backgroundStart(op.Rect.Y, op.Rect.H, tileH, op.PositionY)
+	repeatX, repeatY := backgroundRepeat(op.Repeat)
+	if repeatX {
+		for startX > op.Rect.X {
+			startX -= tileW
+		}
+	}
+	if repeatY {
+		for startY > op.Rect.Y {
+			startY -= tileH
+		}
+	}
+
+	for y := startY; y < op.Rect.Bottom(); y += tileStep(tileH, repeatY) {
+		for x := startX; x < op.Rect.Right(); x += tileStep(tileW, repeatX) {
+			dstRect := image.Rect(
+				int(math.Round(x-op.Rect.X)),
+				int(math.Round(y-op.Rect.Y)),
+				int(math.Round(x-op.Rect.X+tileW)),
+				int(math.Round(y-op.Rect.Y+tileH)),
+			)
+			stddraw.Draw(dst, dstRect, img, img.Bounds().Min, stddraw.Over)
+			if !repeatX {
+				break
+			}
+		}
+		if !repeatY {
+			break
+		}
+	}
+	c.dc.DrawImage(dst, int(math.Round(op.Rect.X)), int(math.Round(op.Rect.Y)))
+}
+
+func backgroundStart(origin, size, tile float64, pos string) float64 {
+	pos = strings.ToLower(strings.TrimSpace(pos))
+	switch pos {
+	case "right", "bottom", "100%":
+		return origin + size - tile
+	case "center", "50%":
+		return origin + (size-tile)/2
+	default:
+		if strings.HasSuffix(pos, "%") {
+			v, err := strconv.ParseFloat(strings.TrimSuffix(pos, "%"), 64)
+			if err == nil {
+				return origin + (size-tile)*v/100
+			}
+		}
+		if l := parseLength(pos); l.set && l.unit != unitAuto && l.unit != unitPercent {
+			if v, ok := l.resolve(size, 16); ok {
+				return origin + v
+			}
+		}
+		return origin
+	}
+}
+
+func backgroundRepeat(repeat string) (bool, bool) {
+	switch strings.ToLower(strings.TrimSpace(repeat)) {
+	case "no-repeat":
+		return false, false
+	case "repeat-x":
+		return true, false
+	case "repeat-y":
+		return false, true
+	default:
+		return true, true
+	}
+}
+
+func tileStep(tile float64, repeat bool) float64 {
+	if !repeat {
+		return math.MaxFloat64
+	}
+	if tile <= 0 {
+		return 1
+	}
+	return tile
 }
 
 func toRGBA(c Color) color.NRGBA {
