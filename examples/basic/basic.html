@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<title>golitehtml 基础通用能力测试</title>
+	<style>
+		body {
+			font-family: Inter, sans-serif;
+			font-size: 15px;
+			line-height: 21px;
+			color: #202428;
+			background: white;
+		}
+		#suite {
+			width: 680px;
+			margin: 16px;
+			padding: 18px;
+			background: #f8fbff;
+			border: 1px solid #9bb7d4;
+		}
+		h1 {
+			margin: 0 0 10px 0;
+			font-size: 26px;
+			line-height: 32px;
+			color: #184e77;
+		}
+		h2 {
+			margin: 18px 0 8px 0;
+			font-size: 1.25em;
+			color: rgb(27, 94, 89);
+		}
+		p {
+			margin: 8px 0;
+		}
+		.panel {
+			margin: 12px 0;
+			padding: 12px 14px;
+			background-color: #ffffff;
+			border: 1px solid #d0d7e2;
+		}
+		.panel strong {
+			color: #9a3412;
+		}
+		p.note {
+			color: #55616d;
+			font-size: 13px;
+		}
+		.center {
+			text-align: center;
+		}
+		.right {
+			text-align: right;
+		}
+		.warning {
+			background: #fff8e8;
+			border: 2px solid #f0c772;
+			color: #5c460a;
+		}
+		.metrics {
+			margin: 10px 0 0 0;
+			padding: 8px 12px 10px 18px;
+			background-color: rgb(238, 246, 255);
+			border-width: 2px;
+			border-color: teal;
+		}
+		.hero {
+			display: block;
+			width: 320px;
+			height: 90px;
+			margin: 8px 0 12px 0;
+		}
+		.small {
+			font-size: 12px;
+			line-height: normal;
+		}
+		.pt-text {
+			font-size: 12pt;
+		}
+		.half {
+			width: 50%;
+			margin: 8px 0;
+			padding: 6px;
+			background: #edf7ff;
+			border: 1px solid #7aa7c7;
+		}
+		.color-named {
+			background: yellow;
+			color: navy;
+		}
+		.color-short {
+			background: #def;
+			color: #074;
+		}
+		.color-short-alpha {
+			background: #0f08;
+			color: black;
+		}
+		.color-long-alpha {
+			background: #336699cc;
+			color: white;
+		}
+		.color-rgb {
+			background: rgb(230, 244, 255);
+			color: rgb(120, 53, 15);
+		}
+		.color-rgba {
+			background: rgba(15, 118, 110, .18);
+			color: rgba(15, 23, 42, 1);
+		}
+		.hidden {
+			display: none;
+		}
+		ul, ol {
+			margin: 8px 0;
+			padding-left: 24px;
+		}
+		li {
+			margin: 4px 0;
+		}
+	</style>
+</head>
+<body bgcolor="#ffffff">
+	<div id="suite">
+		<h1>golitehtml 通用语法测试</h1>
+		<p class="note">覆盖当前库支持的 HTML/CSS 子集，用于快速观察解析、层叠、布局和绘制输出。</p>
+
+		<h2>文本与行内元素</h2>
+		<div class="panel">
+			<p>
+				普通文本、<strong>strong 加粗</strong>、<b>b 加粗</b>、
+				<em>em 斜体</em>、<i>i 斜体</i>、<u>u 下划线</u>、
+				<a href="https://example.com">链接样式</a>、
+				<font color="purple">font color 旧属性</font>。
+			</p>
+			<p>
+				这里测试换行<br>
+				第二行应当从新的行盒开始。
+			</p>
+		</div>
+
+		<h2>选择器、层叠与内联样式</h2>
+		<div class="panel warning">
+			<p class="note" style="color:#0f766e; font-weight:700;">
+				这个段落同时命中标签选择器、组合选择器、类选择器和内联 style，最终颜色应以内联样式为准。
+			</p>
+			<p class="hidden">display:none 的内容不应出现在输出中。</p>
+		</div>
+
+		<h2>盒模型、颜色与对齐</h2>
+		<div class="panel metrics">
+			<p>这个块测试 margin、padding、background-color、border-width 和 border-color。</p>
+			<p class="center">text-align:center 居中。</p>
+			<p class="right">text-align:right 右对齐。</p>
+			<p class="small">line-height:normal 与较小字号。</p>
+			<p class="pt-text">font-size:12pt 会换算为 CSS 像素。</p>
+			<div class="half">width:50% 的块级盒子。</div>
+		</div>
+
+		<h2>颜色格式</h2>
+		<div class="panel">
+			<p class="color-named">命名颜色：yellow / navy。</p>
+			<p class="color-short">短十六进制：#def / #074。</p>
+			<p class="color-short-alpha">短十六进制透明度：#0f08。</p>
+			<p class="color-long-alpha">长十六进制透明度：#336699cc。</p>
+			<p class="color-rgb">rgb(...) 函数颜色。</p>
+			<p class="color-rgba">rgba(...) 函数颜色。</p>
+		</div>
+
+		<h2>图片与尺寸</h2>
+		<img class="hero" src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="320" height="90"><rect width="320" height="90" fill="%23dbeafe"/><circle cx="54" cy="45" r="22" fill="%230f7b6c"/><rect x="110" y="24" width="76" height="42" fill="%23184e77"/><path d="M210 65 C235 20 270 20 300 64" fill="none" stroke="%23f0c772" stroke-width="6"/><text x="18" y="82" fill="%2323527c" font-family="sans-serif" font-size="12">image resolver</text></svg>' alt="image resolver demo">
+
+		<h2>列表</h2>
+		<ul>
+			<li>无序列表圆点 marker</li>
+			<li>列表项中的 <strong>行内加粗</strong> 和普通文本</li>
+		</ul>
+		<ol>
+			<li>有序列表序号 marker</li>
+			<li>第二项用于验证递增</li>
+		</ol>
+	</div>
+</body>
+</html>

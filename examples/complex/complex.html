@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<title>golitehtml complex preview</title>
+	<style>
+		body {
+			font-family: Georgia, serif;
+			font-size: 16px;
+			color: #202428;
+			background: white;
+		}
+		.article {
+			width: 620px;
+			margin: 18px;
+			padding: 22px;
+			background: #fbfcfe;
+			border: 1px solid #cfd7e2;
+		}
+		.kicker {
+			color: #0f7b6c;
+			font-size: 13px;
+			font-weight: 700;
+			margin: 0 0 8px 0;
+		}
+		h1 {
+			font-size: 30px;
+			line-height: 36px;
+			margin: 0 0 12px 0;
+			color: #182533;
+		}
+		.meta {
+			color: #66717d;
+			font-size: 13px;
+			margin: 0 0 18px 0;
+		}
+		.hero {
+			display: block;
+			width: 620px;
+			height: 150px;
+			margin: 0 0 16px 0;
+		}
+		p {
+			margin: 10px 0;
+			line-height: 23px;
+		}
+		.lead {
+			font-size: 18px;
+			line-height: 27px;
+			color: #2f3b46;
+		}
+		.callout {
+			margin: 16px 0;
+			padding: 12px;
+			background: #fff8e8;
+			border: 1px solid #f0c772;
+			color: #5c460a;
+		}
+		.tags {
+			margin: 16px 0 0 0;
+			color: #365f91;
+			font-size: 13px;
+		}
+		ul {
+			margin: 12px 0;
+			padding-left: 24px;
+		}
+		li {
+			margin: 6px 0;
+		}
+	</style>
+</head>
+<body>
+	<article class="article">
+		<p class="kicker">ENGINEERING NOTE</p>
+		<h1>Rendering small HTML documents without owning the drawing stack</h1>
+		<p class="meta">April 29, 2026 · Layout demo · 4 min read</p>
+		<img class="hero" src='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="620" height="150"><rect width="620" height="150" fill="%23dbeafe"/><path d="M40 95 C150 25 260 120 380 50 S540 40 590 88" fill="none" stroke="%235b8cc0" stroke-width="5"/><circle cx="100" cy="70" r="18" fill="%230f7b6c"/><circle cx="310" cy="78" r="18" fill="%231c5d7d"/><circle cx="520" cy="66" r="18" fill="%23f0c772"/><text x="28" y="132" fill="%2323527c" font-family="sans-serif" font-size="14">A simple rendering pipeline</text></svg>' alt="A simple rendering pipeline">
+		<p class="lead">
+			A lightweight renderer is useful when an app needs rich text, release notes,
+			tooltips, or help pages without embedding a full browser.
+		</p>
+		<p>
+			This example uses <strong>golitehtml</strong> to parse HTML, apply a compact CSS
+			subset, wrap text, measure images, and emit backend-neutral drawing commands.
+			The final SVG is painted by a tiny custom <em>Canvas</em> implementation.
+		</p>
+		<div class="callout">
+			The key integration point is small: provide text metrics and implement three
+			draw callbacks for rectangles, text, and images.
+		</div>
+		<p>The current demo exercises:</p>
+		<ul>
+			<li>descendant selectors, classes, ids, and inline emphasis</li>
+			<li>margins, padding, borders, colors, and inherited fonts</li>
+			<li>line wrapping, explicit image sizing, and SVG output</li>
+		</ul>
+		<p class="tags">#html #css #go #layout-engine</p>
+	</article>
+</body>
+</html>
