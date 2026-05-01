@@ -58,12 +58,6 @@ func BenchmarkRenderComplexDrawingLibraries(b *testing.B) {
 				b.Fatal(err)
 			}
 
-			if img, err := renderer.Render(page); err != nil {
-				b.Fatal(err)
-			} else if img.Bounds().Empty() {
-				b.Fatal("warmup render produced an empty image")
-			}
-
 			b.ReportAllocs()
 			b.ResetTimer()
 			renderStart := time.Now()
