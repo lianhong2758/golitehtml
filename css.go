@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 type declaration struct {
@@ -345,6 +346,9 @@ func applyHTMLHints(n *Node) {
 		if v, ok := n.AttrValue("color"); ok {
 			n.Style.applyProperty("color", v)
 		}
+		if v, ok := n.AttrValue("face"); ok {
+			n.Style.applyProperty("font-family", v)
+		}
 	case "b", "strong":
 		n.Style.FontWeight = 700
 	case "i", "em":
@@ -370,4 +374,50 @@ func normalizeSpace(s string) string {
 		space = false
 	}
 	return b.String()
+}
+
+// normalizeInlineSpace 折叠文本节点内部空白，同时保留源码中的前导/尾随空白。
+// 行构建器会把这些边界空白进一步折叠成跨行内标签的单个空格。
+func normalizeInlineSpace(s string) string {
+	text := normalizeSpace(s)
+	if text == "" {
+		if hasWhitespace(s) {
+			return " "
+		}
+		return ""
+	}
+	if startsWithWhitespace(s) {
+		text = " " + text
+	}
+	if endsWithWhitespace(s) {
+		text += " "
+	}
+	return text
+}
+
+func hasWhitespace(s string) bool {
+	for _, r := range s {
+		if unicode.IsSpace(r) {
+			return true
+		}
+	}
+	return false
+}
+
+func startsWithWhitespace(s string) bool {
+	for _, r := range s {
+		return unicode.IsSpace(r)
+	}
+	return false
+}
+
+func endsWithWhitespace(s string) bool {
+	for i := len(s); i > 0; {
+		r, size := utf8.DecodeLastRuneInString(s[:i])
+		if r == utf8.RuneError && size == 0 {
+			return false
+		}
+		return unicode.IsSpace(r)
+	}
+	return false
 }

@@ -13,8 +13,12 @@ import (
 type Options struct {
 	// Width 是输出图片宽度，单位为 CSS 像素。小于等于 0 时使用 800。
 	Width int
-	// Font 是用于所有文字样式的 TTF/OTF 字体字节。留空时使用内嵌中文字体。
-	Font []byte
+	// RenderScale 是超采样绘制倍率。大于 1 时会按更高分辨率绘制并直接输出
+	// 放大后的图片；例如 2 会输出 2 倍宽高。小于等于 1 时使用 1。
+	RenderScale float64
+	// Fonts 是调用方提供的 TTF/OTF 字体字节列表。列表中的字体会参与
+	// font-family 匹配；第一个字体作为最终兜底默认字体。
+	Fonts [][]byte
 	// BaseDir 用于解析相对路径图片，也可以是页面 URL。
 	BaseDir string
 	// UserCSS 会追加到内置 UA CSS 和文档 <style> 之后。
@@ -33,6 +37,7 @@ type Options struct {
 // 3. 使用 gg 将显示列表绘制到位图
 type Renderer struct {
 	width       int
+	renderScale float64
 	userCSS     string
 	background  Color
 	transparent bool
@@ -46,8 +51,12 @@ func New(opts Options) (*Renderer, error) {
 	if width <= 0 {
 		width = 800
 	}
+	renderScale := opts.RenderScale
+	if renderScale <= 1 {
+		renderScale = 1
+	}
 
-	fonts, err := newFontManager(opts.Font)
+	fonts, err := newFontManager(opts.Fonts)
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +68,7 @@ func New(opts Options) (*Renderer, error) {
 
 	return &Renderer{
 		width:       width,
+		renderScale: renderScale,
 		userCSS:     opts.UserCSS,
 		background:  background,
 		transparent: opts.Transparent,
@@ -88,7 +98,9 @@ func (r *Renderer) Render(html []byte) (image.Image, error) {
 		height = 1
 	}
 
-	canvas := newGGCanvas(r.width, height, r.fonts, r.images)
+	canvasWidth := int(math.Ceil(float64(r.width) * r.renderScale))
+	canvasHeight := int(math.Ceil(float64(height) * r.renderScale))
+	canvas := newGGCanvas(canvasWidth, canvasHeight, r.renderScale, r.fonts, r.images)
 	if !r.transparent && r.background.A != 0 {
 		canvas.clear(r.background)
 	}

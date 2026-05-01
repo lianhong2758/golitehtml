@@ -35,14 +35,32 @@ const sampleHTML = `<!doctype html>
 </body>
 </html>`
 
+type fontPathsFlag []string
+
+func (f *fontPathsFlag) String() string {
+	return strings.Join(*f, ",")
+}
+
+func (f *fontPathsFlag) Set(value string) error {
+	for _, part := range strings.Split(value, ",") {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			*f = append(*f, part)
+		}
+	}
+	return nil
+}
+
 func main() {
+	var fonts fontPathsFlag
 	var (
 		in    = flag.String("in", "", "HTML 文件路径，留空则使用内置示例")
 		out   = flag.String("out", "output/html.png", "输出 PNG 路径")
 		width = flag.Int("width", 900, "图片宽度")
-		font  = flag.String("font", "", "外部 TTF/OTF 字体文件路径")
+		scale = flag.Float64("scale", 1, "超采样绘制倍率，大于 1 可提升边缘平滑度")
 		css   = flag.String("css", "", "额外 CSS 文件路径")
 	)
+	flag.Var(&fonts, "font", "外部 TTF/OTF 字体文件路径，可重复或用逗号分隔；第一个作为默认字体")
 	flag.Parse()
 
 	html := []byte(sampleHTML)
@@ -57,14 +75,14 @@ func main() {
 		baseDir = filepath.Dir(*in)
 	}
 
-	var fontData []byte
-	if *font != "" {
-		data, err := os.ReadFile(*font)
+	fontData := make([][]byte, 0, len(fonts))
+	for _, path := range fonts {
+		data, err := os.ReadFile(path)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "读取字体文件失败: %v\n", err)
 			os.Exit(1)
 		}
-		fontData = data
+		fontData = append(fontData, data)
 	}
 
 	var userCSS string
@@ -78,10 +96,11 @@ func main() {
 	}
 
 	renderer, err := golitehtml.New(golitehtml.Options{
-		Width:   *width,
-		Font:    fontData,
-		BaseDir: baseDir,
-		UserCSS: strings.TrimSpace(userCSS),
+		Width:       *width,
+		RenderScale: *scale,
+		Fonts:       fontData,
+		BaseDir:     baseDir,
+		UserCSS:     strings.TrimSpace(userCSS),
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "初始化渲染器失败: %v\n", err)

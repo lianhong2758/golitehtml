@@ -225,7 +225,7 @@ func drawSVGText(dst *image.RGBA, data []byte) {
 			face, err = opentype.NewFace(ttf, &opentype.FaceOptions{
 				Size:    run.size,
 				DPI:     72,
-				Hinting: xfont.HintingNone,
+				Hinting: xfont.HintingFull,
 			})
 			if err != nil {
 				continue

@@ -25,19 +25,32 @@ go run ./cmd -in ./example.html -out ./output/example.png -width 900
 go run ./cmd -in ./example.html -out ./output/example.png -font ./font.ttf -css ./extra.css
 ```
 
+`-font` 可以重复传入，或用逗号分隔多个 TTF/OTF 文件。第一个字体作为默认字体，
+所有传入字体都会和系统已安装字体一起参与 CSS `font-family` / HTML `<font face="">` 匹配。
+如需更平滑的文字和边缘，可以用 `-scale 2` 或更高倍率启用超采样绘制；输出图片宽高也会按倍率放大。
+
 ## 在代码中使用
 
 ```go
 package main
 
 import (
+	"os"
+
 	"github.com/lianhong2758/golitehtml"
 )
 
 func main() {
+	fontData, err := os.ReadFile("font.ttf")
+	if err != nil {
+		panic(err)
+	}
+
 	r, err := golitehtml.New(golitehtml.Options{
-		Width:   900,
-		BaseDir: ".",
+		Width:       900,
+		RenderScale: 2,
+		Fonts:       [][]byte{fontData},
+		BaseDir:     ".",
 	})
 	if err != nil {
 		panic(err)
@@ -57,6 +70,8 @@ func main() {
 - 选择器：标签、`.class`、`#id`、组合简单选择器和后代选择器
 - 常用 CSS：`display`、`color`、`background-color`、`font-*`、`line-height`、
   `text-decoration`、`text-align`、`width`、`height`、`margin`、`padding`、`border`
+- 字体：支持 `font-family` / `font` 简写和 `<font face="">`；会先匹配调用方传入字体，
+  再匹配系统已安装字体，缺少 bold/italic 字体表时会基于常规字体本地绘制
 - 布局：块盒、行内文本、自动换行、`<br>`、图片、链接、标题、段落、列表
 - 图片：本地路径、相对路径、`file://`、`http(s)` 和常见 `data:` 图片
 

@@ -30,6 +30,33 @@ func TestCSSCascadeAndInlineStyle(t *testing.T) {
 	}
 }
 
+func TestFontFamilyFromCSSAndHTMLFontFace(t *testing.T) {
+	doc, err := ParseString(`
+		<style>
+			p { font-family: "Times New Roman", serif; }
+		</style>
+		<p id="css">CSS family</p>
+		<font id="html" face="Georgia, serif">HTML family</font>
+	`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cssNode := doc.QueryOne("#css")
+	if cssNode == nil {
+		t.Fatal("missing CSS node")
+	}
+	if cssNode.Style.FontFamily != "Times New Roman, serif" {
+		t.Fatalf("CSS font family = %q", cssNode.Style.FontFamily)
+	}
+	htmlNode := doc.QueryOne("#html")
+	if htmlNode == nil {
+		t.Fatal("missing HTML font node")
+	}
+	if htmlNode.Style.FontFamily != "Georgia, serif" {
+		t.Fatalf("HTML font face = %q", htmlNode.Style.FontFamily)
+	}
+}
+
 func TestParseColor(t *testing.T) {
 	tests := map[string]Color{
 		"red":              {255, 0, 0, 255},

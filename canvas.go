@@ -124,10 +124,11 @@ func (op RectOp) draw(c Canvas, dx, dy float64) {
 
 // TextOp 表示绘制一段文本。
 type TextOp struct {
-	Rect  Rect
-	Text  string
-	Style TextStyle
-	Node  *Node
+	Rect     Rect
+	Text     string
+	Style    TextStyle
+	Baseline float64
+	Node     *Node
 }
 
 // Bounds 实现 Op。
@@ -136,6 +137,9 @@ func (op TextOp) Bounds() Rect { return op.Rect }
 func (op TextOp) draw(c Canvas, dx, dy float64) {
 	op.Rect.X += dx
 	op.Rect.Y += dy
+	if op.Baseline != 0 {
+		op.Baseline += dy
+	}
 	c.DrawText(op)
 }
 

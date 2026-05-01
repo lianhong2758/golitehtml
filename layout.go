@@ -511,7 +511,7 @@ func (l *layoutContext) addInlineNode(line *lineBuilder, n *Node) {
 		return
 	}
 	if n.Type == TextNode {
-		line.addText(normalizeSpace(n.Data), n.Style, n)
+		line.addText(normalizeInlineSpace(n.Data), n.Style, n)
 		return
 	}
 	if n.Type != ElementNode {
@@ -724,6 +724,7 @@ func (l *lineBuilder) breakLine() {
 	case "right":
 		offset = math.Max(0, l.width-l.cursor)
 	}
+	baseline := l.y + l.lineH*0.8
 	x := l.x + offset
 	for _, item := range l.items {
 		item.rect.X = x
@@ -736,7 +737,7 @@ func (l *lineBuilder) breakLine() {
 			if item.node.Type == TextNode {
 				item.node.Box = item.rect
 			}
-			l.ctx.ops = append(l.ctx.ops, TextOp{Rect: item.rect, Text: item.text, Style: item.style, Node: item.node})
+			l.ctx.ops = append(l.ctx.ops, TextOp{Rect: item.rect, Text: item.text, Style: item.style, Baseline: baseline, Node: item.node})
 		}
 		x += item.rect.W
 	}

@@ -135,7 +135,7 @@ func defaultStyle() Style {
 		BackgroundAttachment: "scroll",
 		BackgroundPositionX:  "0%",
 		BackgroundPositionY:  "0%",
-		FontFamily:           "sans-serif",
+		FontFamily:           "",
 		FontSize:             16,
 		LineHeight:           20,
 		FontWeight:           400,
@@ -234,7 +234,9 @@ func (s *Style) applyProperty(name, value string) {
 	case "background-position-y":
 		s.BackgroundPositionY = value
 	case "font-family":
-		s.FontFamily = strings.Trim(value, `"'`)
+		if family := cleanFontFamilyList(value); family != "" {
+			s.FontFamily = family
+		}
 	case "font-size":
 		if v, ok := parseFontSize(value, s.FontSize); ok && v > 0 {
 			s.FontSize = v
@@ -620,7 +622,9 @@ func (s *Style) applyFont(value string) {
 		}
 	}
 	if familyStart >= 0 && familyStart < len(parts) {
-		s.FontFamily = strings.Trim(strings.Join(parts[familyStart:], " "), `"'`)
+		if family := cleanFontFamilyList(strings.Join(parts[familyStart:], " ")); family != "" {
+			s.FontFamily = family
+		}
 	}
 }
 

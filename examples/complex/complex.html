@@ -5,7 +5,7 @@
 	<title>golitehtml complex preview</title>
 	<style>
 		body {
-			font-family: Georgia, serif;
+			font-family: "Microsoft YaHei", "Segoe UI", sans-serif;
 			font-size: 16px;
 			color: #202428;
 			background: white;
@@ -18,18 +18,21 @@
 			border: 1px solid #cfd7e2;
 		}
 		.kicker {
+			font-family: Arial, "Microsoft YaHei", sans-serif;
 			color: #0f7b6c;
 			font-size: 13px;
 			font-weight: 700;
 			margin: 0 0 8px 0;
 		}
 		h1 {
+			font-family: SimSun, "Times New Roman", serif;
 			font-size: 30px;
 			line-height: 36px;
 			margin: 0 0 12px 0;
 			color: #182533;
 		}
 		.meta {
+			font-family: "Segoe UI", Arial, sans-serif;
 			color: #66717d;
 			font-size: 13px;
 			margin: 0 0 18px 0;
@@ -45,11 +48,13 @@
 			line-height: 23px;
 		}
 		.lead {
+			font-family: "Times New Roman", "Microsoft YaHei", serif;
 			font-size: 18px;
 			line-height: 27px;
 			color: #2f3b46;
 		}
 		.callout {
+			font-family: "Microsoft YaHei", Arial, sans-serif;
 			margin: 16px 0;
 			padding: 12px;
 			background: #fff8e8;
@@ -57,9 +62,14 @@
 			color: #5c460a;
 		}
 		.tags {
+			font-family: Consolas, "Courier New", monospace;
 			margin: 16px 0 0 0;
 			color: #365f91;
 			font-size: 13px;
+		}
+		code {
+			font-family: Consolas, "Courier New", monospace;
+			color: #0f4c81;
 		}
 		ul {
 			margin: 12px 0;
@@ -81,18 +91,19 @@
 			tooltips, or help pages without embedding a full browser.
 		</p>
 		<p>
+			这个段落使用微软雅黑作为默认字体，同时保留 English words 来测试混排 fallback。
 			This example uses <strong>golitehtml</strong> to parse HTML, apply a compact CSS
 			subset, wrap text, measure images, and emit backend-neutral drawing commands.
 			The final SVG is painted by a tiny custom <em>Canvas</em> implementation.
 		</p>
 		<div class="callout">
 			The key integration point is small: provide text metrics and implement three
-			draw callbacks for rectangles, text, and images.
+			draw callbacks for rectangles, text, and images. 当前块指定 Microsoft YaHei。
 		</div>
 		<p>The current demo exercises:</p>
 		<ul>
 			<li>descendant selectors, classes, ids, and inline emphasis</li>
-			<li>margins, padding, borders, colors, and inherited fonts</li>
+			<li>margins, padding, borders, colors, and inherited fonts: <code>Consolas</code></li>
 			<li>line wrapping, explicit image sizing, and SVG output</li>
 		</ul>
 		<p class="tags">#html #css #go #layout-engine</p>

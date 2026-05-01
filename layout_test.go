@@ -140,6 +140,94 @@ func TestDefaultMeasurerKeepsUppercaseWordsApart(t *testing.T) {
 	}
 }
 
+func TestInlineFormattingKeepsBoundarySpaces(t *testing.T) {
+	doc, err := ParseString(`<p>This example uses <strong>golitehtml</strong> to parse HTML.</p>`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	frame, err := doc.Render(500)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var combined string
+	var strong, next TextOp
+	for _, op := range frame.Ops {
+		txt, ok := op.(TextOp)
+		if !ok {
+			continue
+		}
+		combined += txt.Text
+		switch txt.Text {
+		case "golitehtml":
+			strong = txt
+		case "to":
+			next = txt
+		}
+	}
+	if combined != "This example uses golitehtml to parse HTML." {
+		t.Fatalf("combined text = %q", combined)
+	}
+	if strong.Text == "" || next.Text == "" {
+		t.Fatalf("missing text ops: strong=%q next=%q", strong.Text, next.Text)
+	}
+	if gap := next.Rect.X - strong.Rect.Right(); gap < 2 {
+		t.Fatalf("inline formatting gap too small: %v between %+v and %+v", gap, strong.Rect, next.Rect)
+	}
+}
+
+func TestInlineFormattingDoesNotInventSpaces(t *testing.T) {
+	doc, err := ParseString(`<p>A<strong>B</strong>C</p>`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	frame, err := doc.Render(200)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var combined string
+	for _, op := range frame.Ops {
+		if txt, ok := op.(TextOp); ok {
+			combined += txt.Text
+		}
+	}
+	if combined != "ABC" {
+		t.Fatalf("combined text = %q, want ABC", combined)
+	}
+}
+
+func TestInlineMixedFontsShareBaseline(t *testing.T) {
+	doc, err := ParseString(`<p>inherited fonts: <code>Consolas</code></p>`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	frame, err := doc.Render(400)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var label, code TextOp
+	for _, op := range frame.Ops {
+		txt, ok := op.(TextOp)
+		if !ok {
+			continue
+		}
+		switch txt.Text {
+		case "fonts:":
+			label = txt
+		case "Consolas":
+			code = txt
+		}
+	}
+	if label.Text == "" || code.Text == "" {
+		t.Fatalf("missing text ops: label=%q code=%q", label.Text, code.Text)
+	}
+	if label.Baseline == 0 || code.Baseline == 0 {
+		t.Fatalf("missing baselines: label=%v code=%v", label.Baseline, code.Baseline)
+	}
+	if label.Baseline != code.Baseline {
+		t.Fatalf("baselines differ: label=%v code=%v", label.Baseline, code.Baseline)
+	}
+}
+
 func TestListItemsEmitMarkers(t *testing.T) {
 	doc, err := ParseString(`<ul><li>first</li><li>second</li></ul>`)
 	if err != nil {

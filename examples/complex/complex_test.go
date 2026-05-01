@@ -17,8 +17,9 @@ func TestRenderComplexExampleToPNG(t *testing.T) {
 
 	initStart := time.Now()
 	renderer, err := golitehtml.New(golitehtml.Options{
-		Width:   700,
-		BaseDir: ".",
+		RenderScale: 2,
+		Width:       700,
+		BaseDir:     ".",
 	})
 	if err != nil {
 		t.Fatal(err)
