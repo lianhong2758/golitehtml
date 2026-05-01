@@ -27,6 +27,7 @@ type fontSynthesis struct {
 type resolvedFont struct {
 	Entry     *fontEntry
 	Face      fontFace
+	Size      float64
 	Synthesis fontSynthesis
 }
 
@@ -190,22 +191,6 @@ func (m *fontManager) textRuns(text string, style TextStyle) ([]resolvedTextRun,
 	return runs, nil
 }
 
-// face 返回指定样式的字体 face；同一字号和样式会复用缓存。
-func (m *fontManager) face(style TextStyle) (resolvedFont, error) {
-	size := style.Size
-	if size <= 0 {
-		size = 16
-	}
-	entry, synth := m.match(style)
-	if entry == nil {
-		entry = m.defaultEntry
-	}
-	if entry == nil {
-		return resolvedFont{}, fmt.Errorf("no font available")
-	}
-	return m.faceForEntry(entry, style, synth)
-}
-
 func (m *fontManager) faceForEntry(entry *fontEntry, style TextStyle, synth fontSynthesis) (resolvedFont, error) {
 	size := style.Size
 	if size <= 0 {
@@ -232,7 +217,7 @@ func (m *fontManager) faceForEntry(entry *fontEntry, style TextStyle, synth font
 	if err != nil {
 		return resolvedFont{}, err
 	}
-	resolved := resolvedFont{Entry: entry, Face: face, Synthesis: synth}
+	resolved := resolvedFont{Entry: entry, Face: face, Size: size, Synthesis: synth}
 	m.faces[key] = resolved
 	return resolved, nil
 }

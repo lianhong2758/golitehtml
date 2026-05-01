@@ -489,13 +489,6 @@ func (l *layoutContext) layoutInlineContainer(n *Node, x, y, width float64) floa
 	return l.layoutInlineChildren(n, x, y, width)
 }
 
-// layoutInlineRun 把单个行内节点放入独立行盒中。
-func (l *layoutContext) layoutInlineRun(parent, child *Node, x, y, width float64) float64 {
-	line := newLineBuilder(l, x, y, width, parent.Style.TextAlign)
-	l.addInlineNode(line, child)
-	return line.finish()
-}
-
 // layoutInlineChildren 按文档顺序收集行内子节点。
 func (l *layoutContext) layoutInlineChildren(n *Node, x, y, width float64) float64 {
 	line := newLineBuilder(l, x, y, width, n.Style.TextAlign)
@@ -753,33 +746,4 @@ func (l *lineBuilder) breakLine() {
 func (l *lineBuilder) finish() float64 {
 	l.breakLine()
 	return l.totalH
-}
-
-// splitWords 把普通文本拆成单词和单个空格，保留可换行边界。
-func splitWords(s string) []string {
-	if s == "" {
-		return nil
-	}
-	var out []string
-	var b strings.Builder
-	inSpace := false
-	for _, r := range s {
-		if r == ' ' {
-			if b.Len() > 0 {
-				out = append(out, b.String())
-				b.Reset()
-			}
-			if !inSpace {
-				out = append(out, " ")
-			}
-			inSpace = true
-			continue
-		}
-		inSpace = false
-		b.WriteRune(r)
-	}
-	if b.Len() > 0 {
-		out = append(out, b.String())
-	}
-	return out
 }

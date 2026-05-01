@@ -28,6 +28,7 @@ go run ./cmd -in ./example.html -out ./output/example.png -font ./font.ttf -css 
 `-font` 可以重复传入，或用逗号分隔多个 TTF/OTF 文件。第一个字体作为默认字体，
 所有传入字体都会和系统已安装字体一起参与 CSS `font-family` / HTML `<font face="">` 匹配。
 如需更平滑的文字和边缘，可以用 `-scale 2` 或更高倍率启用超采样绘制；输出图片宽高也会按倍率放大。
+绘图库后端默认使用 `gg`，也可以用 `-draw tinyskia` 切换到 tinyskia 后端。
 
 ## 在代码中使用
 
@@ -49,6 +50,7 @@ func main() {
 	r, err := golitehtml.New(golitehtml.Options{
 		Width:       900,
 		RenderScale: 2,
+		DrawingLibrary: golitehtml.DrawingLibraryTinySkia,
 		Fonts:       [][]byte{fontData},
 		BaseDir:     ".",
 	})

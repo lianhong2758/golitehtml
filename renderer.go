@@ -2,6 +2,7 @@ package golitehtml
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"image/png"
 	"math"
@@ -16,6 +17,8 @@ type Options struct {
 	// RenderScale 是超采样绘制倍率。大于 1 时会按更高分辨率绘制并直接输出
 	// 放大后的图片；例如 2 会输出 2 倍宽高。小于等于 1 时使用 1。
 	RenderScale float64
+	// DrawingLibrary 选择位图绘制后端。空值使用 gg；可选值为 "gg" 和 "tinyskia"。
+	DrawingLibrary DrawingLibrary
 	// Fonts 是调用方提供的 TTF/OTF 字体字节列表。列表中的字体会参与
 	// font-family 匹配；第一个字体作为最终兜底默认字体。
 	Fonts [][]byte
@@ -34,10 +37,11 @@ type Options struct {
 // 结构上沿用 litehtml 的集成思路：
 // 1. HTML/CSS 解析成 DOM 和计算样式
 // 2. 在指定宽度下生成显示列表
-// 3. 使用 gg 将显示列表绘制到位图
+// 3. 使用所选绘图库将显示列表绘制到位图
 type Renderer struct {
 	width       int
 	renderScale float64
+	drawing     DrawingLibrary
 	userCSS     string
 	background  Color
 	transparent bool
@@ -55,6 +59,13 @@ func New(opts Options) (*Renderer, error) {
 	if renderScale <= 1 {
 		renderScale = 1
 	}
+	drawing := opts.DrawingLibrary
+	if drawing == "" {
+		drawing = DrawingLibraryGG
+	}
+	if !validDrawingLibrary(drawing) {
+		return nil, fmt.Errorf("golitehtml: unsupported drawing library %q", drawing)
+	}
 
 	fonts, err := newFontManager(opts.Fonts)
 	if err != nil {
@@ -69,6 +80,7 @@ func New(opts Options) (*Renderer, error) {
 	return &Renderer{
 		width:       width,
 		renderScale: renderScale,
+		drawing:     drawing,
 		userCSS:     opts.UserCSS,
 		background:  background,
 		transparent: opts.Transparent,
@@ -100,7 +112,7 @@ func (r *Renderer) Render(html []byte) (image.Image, error) {
 
 	canvasWidth := int(math.Ceil(float64(r.width) * r.renderScale))
 	canvasHeight := int(math.Ceil(float64(height) * r.renderScale))
-	canvas := newGGCanvas(canvasWidth, canvasHeight, r.renderScale, r.fonts, r.images)
+	canvas := newRasterCanvas(canvasWidth, canvasHeight, r.renderScale, r.drawing, r.fonts, r.images)
 	if !r.transparent && r.background.A != 0 {
 		canvas.clear(r.background)
 	}

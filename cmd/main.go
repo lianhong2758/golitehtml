@@ -58,6 +58,7 @@ func main() {
 		out   = flag.String("out", "output/html.png", "输出 PNG 路径")
 		width = flag.Int("width", 900, "图片宽度")
 		scale = flag.Float64("scale", 1, "超采样绘制倍率，大于 1 可提升边缘平滑度")
+		draw  = flag.String("draw", "gg", "绘图库后端: gg 或 tinyskia")
 		css   = flag.String("css", "", "额外 CSS 文件路径")
 	)
 	flag.Var(&fonts, "font", "外部 TTF/OTF 字体文件路径，可重复或用逗号分隔；第一个作为默认字体")
@@ -96,11 +97,12 @@ func main() {
 	}
 
 	renderer, err := golitehtml.New(golitehtml.Options{
-		Width:       *width,
-		RenderScale: *scale,
-		Fonts:       fontData,
-		BaseDir:     baseDir,
-		UserCSS:     strings.TrimSpace(userCSS),
+		Width:          *width,
+		RenderScale:    *scale,
+		DrawingLibrary: golitehtml.DrawingLibrary(*draw),
+		Fonts:          fontData,
+		BaseDir:        baseDir,
+		UserCSS:        strings.TrimSpace(userCSS),
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "初始化渲染器失败: %v\n", err)

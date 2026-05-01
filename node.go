@@ -82,16 +82,3 @@ func (n *Node) append(child *Node) {
 	child.Parent = n
 	n.Children = append(n.Children, child)
 }
-
-func elementChildren(n *Node) []*Node {
-	if n == nil || len(n.Children) == 0 {
-		return nil
-	}
-	out := make([]*Node, 0, len(n.Children))
-	for _, child := range n.Children {
-		if child.Type == ElementNode {
-			out = append(out, child)
-		}
-	}
-	return out
-}

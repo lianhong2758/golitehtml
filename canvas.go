@@ -1,6 +1,53 @@
 package golitehtml
 
-import "unicode"
+import (
+	"image"
+	"image/color"
+	stddraw "image/draw"
+	"math"
+	"strconv"
+	"strings"
+	"unicode"
+
+	xdraw "golang.org/x/image/draw"
+	"golang.org/x/image/math/fixed"
+)
+
+type DrawingLibrary string
+
+const (
+	DrawingLibraryGG       DrawingLibrary = "gg"
+	DrawingLibraryTinySkia DrawingLibrary = "tinyskia"
+)
+
+var DrawingLibraries = []DrawingLibrary{
+	DrawingLibraryGG,
+	DrawingLibraryTinySkia,
+}
+
+type rasterCanvas interface {
+	Canvas
+	clear(Color)
+	image() image.Image
+}
+
+func newRasterCanvas(width, height int, scale float64, drawing DrawingLibrary, fonts *fontManager, images *imageLoader) rasterCanvas {
+	switch drawing {
+	case DrawingLibraryTinySkia:
+		return newTinySkiaCanvas(width, height, scale, fonts, images)
+	default:
+		return newGGCanvas(width, height, scale, fonts, images)
+	}
+}
+
+func validDrawingLibrary(drawing DrawingLibrary) bool {
+	for _, value := range DrawingLibraries {
+		if drawing == value {
+			return true
+		}
+	}
+	return false
+}
 
 // TextStyle 表示宿主侧文本测量和绘制所需的字体与颜色状态。
 type TextStyle struct {
@@ -205,4 +252,152 @@ func (f *Frame) Draw(c Canvas, dx, dy float64, clip *Rect) {
 			op.draw(c, dx, dy)
 		}
 	}
+}
+
+func scaleRect(r Rect, scale float64) Rect {
+	if scale == 1 {
+		return r
+	}
+	return Rect{
+		X: r.X * scale,
+		Y: r.Y * scale,
+		W: r.W * scale,
+		H: r.H * scale,
+	}
+}
+
+func scaleTextStyle(style TextStyle, scale float64) TextStyle {
+	if scale == 1 {
+		return style
+	}
+	style.Size *= scale
+	style.LineHeight *= scale
+	return style
+}
+
+func backgroundImageLayer(op BackgroundImageOp, scale float64, images *imageLoader) (image.Image, Rect, bool) {
+	if op.Rect.Empty() || op.Src == "" {
+		return nil, Rect{}, false
+	}
+	img, ok := images.Image(op.Src)
+	if !ok {
+		return nil, Rect{}, false
+	}
+	bounds := img.Bounds()
+	tileW := float64(bounds.Dx())
+	tileH := float64(bounds.Dy())
+	if tileW <= 0 || tileH <= 0 {
+		return nil, Rect{}, false
+	}
+	scaledTile := img
+	if scale != 1 {
+		scaledTile = scaleImage(img, int(math.Round(tileW*scale)), int(math.Round(tileH*scale)))
+	}
+
+	rect := scaleRect(op.Rect, scale)
+	dstW := int(math.Ceil(rect.W))
+	dstH := int(math.Ceil(rect.H))
+	if dstW <= 0 || dstH <= 0 {
+		return nil, Rect{}, false
+	}
+	dst := image.NewRGBA(image.Rect(0, 0, dstW, dstH))
+	startX := backgroundStart(op.Rect.X, op.Rect.W, tileW, op.PositionX)
+	startY := backgroundStart(op.Rect.Y, op.Rect.H, tileH, op.PositionY)
+	repeatX, repeatY := backgroundRepeat(op.Repeat)
+	if repeatX {
+		for startX > op.Rect.X {
+			startX -= tileW
+		}
+	}
+	if repeatY {
+		for startY > op.Rect.Y {
+			startY -= tileH
+		}
+	}
+
+	for y := startY; y < op.Rect.Bottom(); y += tileStep(tileH, repeatY) {
+		for x := startX; x < op.Rect.Right(); x += tileStep(tileW, repeatX) {
+			dstRect := image.Rect(
+				int(math.Round((x-op.Rect.X)*scale)),
+				int(math.Round((y-op.Rect.Y)*scale)),
+				int(math.Round((x-op.Rect.X+tileW)*scale)),
+				int(math.Round((y-op.Rect.Y+tileH)*scale)),
+			)
+			stddraw.Draw(dst, dstRect, scaledTile, scaledTile.Bounds().Min, stddraw.Over)
+			if !repeatX {
+				break
+			}
+		}
+		if !repeatY {
+			break
+		}
+	}
+	return dst, rect, true
+}
+
+func backgroundStart(origin, size, tile float64, pos string) float64 {
+	pos = strings.ToLower(strings.TrimSpace(pos))
+	switch pos {
+	case "right", "bottom", "100%":
+		return origin + size - tile
+	case "center", "50%":
+		return origin + (size-tile)/2
+	default:
+		if strings.HasSuffix(pos, "%") {
+			v, err := strconv.ParseFloat(strings.TrimSuffix(pos, "%"), 64)
+			if err == nil {
+				return origin + (size-tile)*v/100
+			}
+		}
+		if l := parseLength(pos); l.set && l.unit != unitAuto && l.unit != unitPercent {
+			if v, ok := l.resolve(size, 16); ok {
+				return origin + v
+			}
+		}
+		return origin
+	}
+}
+
+func backgroundRepeat(repeat string) (bool, bool) {
+	switch strings.ToLower(strings.TrimSpace(repeat)) {
+	case "no-repeat":
+		return false, false
+	case "repeat-x":
+		return true, false
+	case "repeat-y":
+		return false, true
+	default:
+		return true, true
+	}
+}
+
+func tileStep(tile float64, repeat bool) float64 {
+	if !repeat {
+		return math.MaxFloat64
+	}
+	if tile <= 0 {
+		return 1
+	}
+	return tile
+}
+
+func toRGBA(c Color) color.NRGBA {
+	return color.NRGBA{R: c.R, G: c.G, B: c.B, A: c.A}
+}
+
+func fixedToFloat(v fixed.Int26_6) float64 {
+	return float64(v) / 64
+}
+
+func maxFloat(a, b float64) float64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func scaleImage(src image.Image, width, height int) image.Image {
+	dst := image.NewRGBA(image.Rect(0, 0, width, height))
+	xdraw.CatmullRom.Scale(dst, dst.Bounds(), src, src.Bounds(), xdraw.Over, nil)
+	return dst
 }

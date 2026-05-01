@@ -213,8 +213,7 @@ func findRuleClose(s string, from int) int {
 // applyStyles 按“继承默认值 -> CSS 规则 -> HTML 旧属性 -> 内联 style”的顺序计算样式。
 func applyStyles(root *Node, rules []cssRule) {
 	ruleSet := newCSSRuleSet(rules)
-	var applyMatchingRules func(*Node)
-	applyMatchingRules = func(n *Node) {
+	applyMatchingRules := func(n *Node) {
 		for _, idx := range ruleSet.candidates(n) {
 			rule := ruleSet.rules[idx]
 			if rule.selector.matches(n) {
@@ -405,19 +404,11 @@ func hasWhitespace(s string) bool {
 }
 
 func startsWithWhitespace(s string) bool {
-	for _, r := range s {
-		return unicode.IsSpace(r)
-	}
-	return false
+	r, size := utf8.DecodeRuneInString(s)
+	return size > 0 && unicode.IsSpace(r)
 }
 
 func endsWithWhitespace(s string) bool {
-	for i := len(s); i > 0; {
-		r, size := utf8.DecodeLastRuneInString(s[:i])
-		if r == utf8.RuneError && size == 0 {
-			return false
-		}
-		return unicode.IsSpace(r)
-	}
-	return false
+	r, size := utf8.DecodeLastRuneInString(s)
+	return size > 0 && unicode.IsSpace(r)
 }

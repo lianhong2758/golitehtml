@@ -44,3 +44,26 @@ func TestRendererRenderScaleIncreasesOutputSize(t *testing.T) {
 		t.Fatalf("image height = %d, want > 2", img.Bounds().Dy())
 	}
 }
+
+func TestRendererSupportsTinySkiaDrawingLibrary(t *testing.T) {
+	renderer, err := New(Options{Width: 320, DrawingLibrary: DrawingLibraryTinySkia})
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	img, err := renderer.Render([]byte(`<p style="font-size:18px;color:#0969da">tinyskia 后端</p>`))
+	if err != nil {
+		t.Fatalf("Render() error = %v", err)
+	}
+	if img.Bounds().Dx() != 320 {
+		t.Fatalf("image width = %d, want 320", img.Bounds().Dx())
+	}
+	if img.Bounds().Dy() <= 1 {
+		t.Fatalf("image height = %d, want > 1", img.Bounds().Dy())
+	}
+}
+
+func TestRendererRejectsUnknownDrawingLibrary(t *testing.T) {
+	if _, err := New(Options{DrawingLibrary: "unknown"}); err == nil {
+		t.Fatal("New() succeeded with an unknown drawing library")
+	}
+}
