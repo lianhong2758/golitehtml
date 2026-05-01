@@ -66,6 +66,7 @@ func BenchmarkRenderComplexDrawingLibraries(b *testing.B) {
 
 			b.ReportAllocs()
 			b.ResetTimer()
+			renderStart := time.Now()
 			for i := 0; i < b.N; i++ {
 				img, err := renderer.Render(page)
 				if err != nil {
@@ -75,6 +76,9 @@ func BenchmarkRenderComplexDrawingLibraries(b *testing.B) {
 					b.Fatal("render produced an empty image")
 				}
 			}
+			renderElapsed := time.Since(renderStart)
+			b.StopTimer()
+			b.ReportMetric(float64(renderElapsed.Nanoseconds())/float64(b.N)/float64(time.Millisecond), "ms/op")
 		})
 	}
 }
